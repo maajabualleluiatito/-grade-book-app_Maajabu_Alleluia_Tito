@@ -14,6 +14,8 @@ class Student:
     def calculate_gpa(self):
         total_points = 0
         total_credits = 0
+
+        # Calculate GPA based on grades and credits
         for course, grade, credits_earned in self.courses:
             total_points += grade * credits_earned
             total_credits += credits_earned
@@ -61,6 +63,7 @@ class GradeBook:
             print("Student or course not found.")
 
     def calculate_ranking(self):
+        # Sort students by GPA in descending order
         self.student_list.sort(key=lambda s: s.gpa, reverse=True)
         self.save_data()
         self.display_students_sorted_by_gpa()
@@ -71,7 +74,12 @@ class GradeBook:
             print(f"Email: {student.email}, Name: {student.name}, GPA: {student.gpa:.2f}")
 
     def search_by_gpa(self, min_gpa, max_gpa):
-        return [s for s in self.student_list if min_gpa <= s.gpa <= max_gpa]
+        # Ensure GPA range is between 1 and 5
+        if 1 <= min_gpa <= 5 and 1 <= max_gpa <= 5:
+            return [s for s in self.student_list if min_gpa <= s.gpa <= max_gpa]
+        else:
+            print("Invalid GPA range. Please enter values between 1 and 5.")
+            return []
 
     def generate_all_transcripts(self):
         transcripts = []
@@ -84,16 +92,19 @@ class GradeBook:
         return transcripts
 
     def is_valid_email(self, email):
+        # Validate email format using regex
         pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
         return re.match(pattern, email) is not None
 
     def save_data(self):
+        # Save student and course data to JSON files
         with open('students.json', 'w') as f:
             json.dump([{'email': s.email, 'name': s.name, 'courses': s.courses, 'gpa': s.gpa} for s in self.student_list], f)
         with open('courses.json', 'w') as f:
             json.dump([c.__dict__ for c in self.course_list], f)
 
     def load_data(self):
+        # Load student and course data from JSON files
         if os.path.exists('students.json'):
             with open('students.json', 'r') as f:
                 students_data = json.load(f)
@@ -183,8 +194,11 @@ def main():
             try:
                 grade = int(input("Enter grade [1-5]: ").strip())
                 credits_earned = int(input("Enter credits earned [0 or 25]: ").strip())
-                if grade < 1 or grade > 5 or credits_earned not in [0, 25]:
-                    print("Invalid grade or credits. Please try again.")
+                # Validate grade and credits earned input
+                if grade < 1 or grade > 5:
+                    print("Invalid grade. Please enter a number between 1 and 5.")
+                elif credits_earned not in [0, 25]:
+                    print("Invalid credits. Please enter either 0 or 25.")
                 else:
                     gradebook.enter_student_grades_for_course(email, course_name, grade, credits_earned)
             except ValueError:
@@ -193,11 +207,15 @@ def main():
             gradebook.calculate_ranking()
         elif choice == 7:
             try:
-                min_gpa = float(input("Enter minimum GPA: ").strip())
-                max_gpa = float(input("Enter maximum GPA: ").strip())
-                filtered_students = gradebook.search_by_gpa(min_gpa, max_gpa)
-                for student in filtered_students:
-                    print(f"Email: {student.email}, Name: {student.name}, GPA: {student.gpa:.2f}")
+                min_gpa = float(input("Enter minimum GPA (1-5): ").strip())
+                max_gpa = float(input("Enter maximum GPA (1-5): ").strip())
+                # Validate GPA range input
+                if min_gpa < 1 or min_gpa > 5 or max_gpa < 1 or max_gpa > 5:
+                    print("Invalid GPA range. Please enter values between 1 and 5.")
+                else:
+                    filtered_students = gradebook.search_by_gpa(min_gpa, max_gpa)
+                    for student in filtered_students:
+                        print(f"Email: {student.email}, Name: {student.name}, GPA: {student.gpa:.2f}")
             except ValueError:
                 print("Invalid input. Please enter valid numbers for GPA range.")
         elif choice == 8:
@@ -212,4 +230,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

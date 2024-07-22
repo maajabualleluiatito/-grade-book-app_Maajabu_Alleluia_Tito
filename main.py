@@ -14,13 +14,13 @@ class Student:
     def calculate_gpa(self):
         total_points = 0
         total_credits = 0
-        for course, grade, credits in self.courses:
-            total_points += grade * credits
-            total_credits += credits
+        for course, grade, credits_earned in self.courses:
+            total_points += grade * credits_earned
+            total_credits += credits_earned
         self.gpa = total_points / total_credits if total_credits > 0 else 0.0
 
-    def register_for_course(self, course, grade, credits):
-        self.courses.append((course, grade, credits))
+    def register_for_course(self, course, grade, credits_earned):
+        self.courses.append((course, grade, credits_earned))
         self.calculate_gpa()
 
 class Course:
@@ -50,11 +50,11 @@ class GradeBook:
         self.course_list.append(new_course)
         self.save_data()
 
-    def enter_student_grades_for_course(self, email, course_name, grade, credits):
+    def enter_student_grades_for_course(self, email, course_name, grade, credits_earned):
         student = next((s for s in self.student_list if s.email == email), None)
         course = next((c for c in self.course_list if c.name == course_name), None)
         if student and course:
-            student.register_for_course(course_name, grade, credits)
+            student.register_for_course(course_name, grade, credits_earned)
             self.save_data()
             print("Student grades entered successfully.")
         else:
@@ -63,20 +63,25 @@ class GradeBook:
     def calculate_ranking(self):
         self.student_list.sort(key=lambda s: s.gpa, reverse=True)
         self.save_data()
+        self.display_students_sorted_by_gpa()
+
+    def display_students_sorted_by_gpa(self):
+        print("Students sorted by GPA:")
+        for student in self.student_list:
+            print(f"Email: {student.email}, Name: {student.name}, GPA: {student.gpa:.2f}")
 
     def search_by_gpa(self, min_gpa, max_gpa):
         return [s for s in self.student_list if min_gpa <= s.gpa <= max_gpa]
 
-    def generate_transcript(self, email):
-        student = next((s for s in self.student_list if s.email == email), None)
-        if student:
+    def generate_all_transcripts(self):
+        transcripts = []
+        for student in self.student_list:
             transcript = f"Transcript for {student.name} ({student.email}):\n"
-            for course, grade, credits in student.courses:
-                transcript += f"Course: {course}, Grade: {grade}, Credits: {credits}\n"
+            for course, grade, credits_earned in student.courses:
+                transcript += f"Course: {course}, Grade: {grade}, Credits Earned: {credits_earned}\n"
             transcript += f"GPA: {student.gpa:.2f}\n"
-            return transcript
-        else:
-            return "Student not found."
+            transcripts.append(transcript)
+        return transcripts
 
     def is_valid_email(self, email):
         pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
@@ -121,7 +126,7 @@ def display_menu():
     print("3. Edit Student Records")
     print("4. Create Course Record")
     print("5. Enter Student Grades for a Course")
-    print("6. Sort Students by their GPA Rankings")
+    print("6. Display Students by their GPA Rankings")
     print("7. Search Student by GPA obtained")
     print("8. Generate Students' Transcripts")
     print("9. Exit the Grade Book Application")
@@ -141,7 +146,11 @@ def main():
             continue
 
         if choice == 0:
-            print("Grade Book Application Introduction: Manage student records, course registration, and GPA calculations.")
+            if os.path.exists('README.md'):
+                with open('README.md', 'r') as file:
+                    print(file.read())
+            else:
+                print("README.md file not found.")
         elif choice == 1:
             email = input("Enter student email: ").strip()
             name = input("Enter student name: ").strip()
@@ -161,8 +170,8 @@ def main():
             else:
                 print("Student not found.")
         elif choice == 4:
-            name = input("Enter course name: ").strip()
-            trimester = input("Enter course trimester: ").strip()
+            name = input("N.B: In this coming trimester, we will teach students three mandatory courses [Frontend Web Development, Web Infrastructure, and Responsible Enterprise]. Therefore you are requested to register yourself in all of them.  Enter course name: ").strip()
+            trimester = input("N.B: The coming trimester will begin in September this current year. Therefore, use 'September 2024' as the course trimester name. Enter course trimester: ").strip()
             gradebook.add_course(name, trimester)
             print("Course record created successfully.")
         elif choice == 5:
@@ -173,16 +182,15 @@ def main():
             course_name = input("Enter course name: ").strip()
             try:
                 grade = int(input("Enter grade [1-5]: ").strip())
-                credits = int(input("Enter credits earned [0 or 25]: ").strip())
-                if grade < 1 or grade > 5 or credits not in [0, 25]:
+                credits_earned = int(input("Enter credits earned [0 or 25]: ").strip())
+                if grade < 1 or grade > 5 or credits_earned not in [0, 25]:
                     print("Invalid grade or credits. Please try again.")
                 else:
-                    gradebook.enter_student_grades_for_course(email, course_name, grade, credits)
+                    gradebook.enter_student_grades_for_course(email, course_name, grade, credits_earned)
             except ValueError:
-                print("Invalid input. Please enter valid numbers for grade and credits.")
+                print("Invalid input. Please enter valid numbers for grade and credits earned.")
         elif choice == 6:
             gradebook.calculate_ranking()
-            print("Students sorted by GPA rankings.")
         elif choice == 7:
             try:
                 min_gpa = float(input("Enter minimum GPA: ").strip())
@@ -193,9 +201,9 @@ def main():
             except ValueError:
                 print("Invalid input. Please enter valid numbers for GPA range.")
         elif choice == 8:
-            email = input("Enter student email to generate transcript: ").strip()
-            transcript = gradebook.generate_transcript(email)
-            print(transcript)
+            transcripts = gradebook.generate_all_transcripts()
+            for transcript in transcripts:
+                print(transcript)
         elif choice == 9:
             print("Exiting the Grade Book Application. Goodbye!")
             break
